@@ -1,0 +1,37 @@
+#include "Lock.h"
+
+CLock::CLock(void)
+{
+    pthread_mutex_init(&m_Lock,NULL);
+
+}
+
+CLock::~CLock(void)
+{
+    pthread_mutex_destroy(&m_Lock);
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// 名   称：CLock::Lock
+/// 功   能：将锁对象进行上锁处理
+/// 参   数：void
+/// 返回 值：bool                       public
+////////////////////////////////////////////////////////////////////////////////
+bool CLock::Lock()
+{
+    pthread_mutex_lock(&m_Lock);
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// 名   称：CLock::UnLock
+/// 功   能：将锁对象进行解锁处理
+/// 参   数：void
+/// 返回 值：bool                       public
+////////////////////////////////////////////////////////////////////////////////
+bool CLock::UnLock()
+{
+    pthread_mutex_unlock(&m_Lock);
+    return true;
+}
