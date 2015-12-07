@@ -2,11 +2,19 @@
 
 TCPSocket::TCPSocket()
     : m_bThreadEpollWork(false)
+    , m_nCfgPort(0)
+    , m_nCfgLimitNum(0)
+    , m_nSizeTask(0)
+    , m_nSizeThreadPoolMax(0)
+    , m_nSizeThreadPoolPre(0)
 {
+    memset(m_strCfgIP, 0, sizeof(m_strCfgIP));
+
     m_parWork.pfdListen = &m_fdListen;
     m_parWork.pfdEpoll = &m_fdEpoll;
     m_parWork.pEvents = m_events;
     m_parWork.pMapBuffer = &m_mapBuffer;
+    m_parWork.pMgrThreadPool = &m_mgrThreadPool;
     m_parWork.pRLimitNum = &m_nCfgLimitNum;
     m_parWork.pOnOff = &m_bThreadEpollWork;
 
@@ -125,21 +133,34 @@ bool TCPSocket::Delfd(map<int, CSocketClient*>* pMapBuffer, int epollfd, int fd)
     return true;
 }
 
+void TCPSocket::MyProcFunc(void* pArg)
+{
+    CCMDProcess::getInstance()->Proc((CSocketPacket*)pArg);
+    return ;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 /// 名   称：TCPSocket::EpollELWork
 /// 功   能：Epoll主要工作函数
-/// 参   数：map<int, CSocketClient*>* pMapBuffer      map容器：Key为客户sockfd，Data为Client对象指针
-///         epoll_event* events                       捕获为Epoll事件数组
+/// 参   数：stuThreadParam* pStu                      传入函数的结构体指针
 ///         int number                                本次捕获事件数组个数
-///         int epollfd                               epoll集合，用以增加、删除客户端
-///         int listenfd                              服务器Socket，用以判断新连接产生
 /// 返回 值：bool                       private
 ////////////////////////////////////////////////////////////////////////////////
-bool TCPSocket::EpollELWork(map<int, CSocketClient*>* pMapBuffer, epoll_event* events, int number, int epollfd, int listenfd)
+bool TCPSocket::EpollELWork(stuThreadParam* pStu, int number)
 {
-    CSocketPacket pack;
-    CSocketPacket packSend;
+    CSocketPacket* pPacket;
     char buf[SIZE_PACKET_MAX];
+
+    // map容器：Key为客户sockfd，Data为Client对象指针
+    map<int, CSocketClient*>* pMapBuffer = (map<int, CSocketClient*>*)pStu->pMapBuffer;
+    // 捕获为Epoll事件数组
+    epoll_event* events = pStu->pEvents;
+    // epoll集合，用以增加、删除客户端
+    int epollfd = *pStu->pfdEpoll;
+    // 服务器Socket，用以判断新连接产生
+    int listenfd = *pStu->pfdListen;
+    // 线程池指针
+    CThreadPoolManager* pMgrThreadPool = (CThreadPoolManager*)pStu->pMgrThreadPool;
 
     for (int i = 0; i < number; i++)
     {
@@ -178,51 +199,22 @@ bool TCPSocket::EpollELWork(map<int, CSocketClient*>* pMapBuffer, epoll_event* e
                 }
                 else
                 {
+                    pPacket = new CSocketPacket;
                     // 放入环形缓冲区，然后再从环形缓冲区中弹出完整包
                     (*pMapBuffer)[sockfd]->GetBuffer()->PushByte(buf, ret);
-                    while ((*pMapBuffer)[sockfd]->GetBuffer()->PopPacket(pack.setTotalData()))
+                    while ((*pMapBuffer)[sockfd]->GetBuffer()->PopPacket(pPacket->setTotalData()))
                     {
-                        // RingBuffer, ThreadPoor,
-                        int nCMD = 0, nPa1 = 0, nPa2 = 0, nStrLen = 0;
-                        char* pStr = 0x00;
-                        long lTime = 0;
-
-                        if (pack.isChecked())
+                        if (pPacket->isChecked())
                         {
-                            nCMD = pack.get_CMD();
-                            nPa1 = pack.pop_int();
-                            nPa2 = pack.pop_int();
-                            pack.pop_byteArray(pStr, nStrLen);
-                            lTime = pack.pop_long();
-                            LOG("Recv CMD:%d, nPa1:%d, nPa2:%d, Str:%s, nTime:%d,",
-                                nCMD, nPa1, nPa2, pStr, lTime);
-
-                            packSend.formatData();
-                            packSend.set_CMD(nCMD);
-                            packSend.push_int(nPa1);
-                            packSend.push_int(nPa2);
-                            packSend.push_int(nPa1 + nPa2);
-                            packSend.push_byteArray(pStr, nStrLen);
-                            packSend.push_long(lTime);
-                            packSend.push_finish();
-                            if (packSend.isCompleted())
-                            {
-                                int nRet = send(sockfd, packSend.getTotalData(), packSend.get_Length(), 0);
-                                if (nRet < 0)
-                                {
-                                    LOG("Send Error.\n");
-                                }
-                            }
-                            else
-                            {
-                                LOG("pack is not completed.\n");
-                            }
+                            pMgrThreadPool->Run(MyProcFunc, (void*)pPacket);
+                            pPacket = new CSocketPacket;
                         }
                         else
                         {
                             LOG("Pack is not Check.\n");
                         }
                     }
+                    delete pPacket;
                 }
             }
         }
@@ -252,7 +244,8 @@ void* TCPSocket::ThreadEpollWork(void* param)
         {
             LOG("Epoll wait Error....");
         }
-        EpollELWork((map<int, CSocketClient*>*)pStu->pMapBuffer, pStu->pEvents, ret, *pStu->pfdEpoll, *pStu->pfdListen);
+        //EpollELWork((map<int, CSocketClient*>*)pStu->pMapBuffer, pStu->pEvents, ret, *pStu->pfdEpoll, *pStu->pfdListen);
+        EpollELWork(pStu, ret);
     }
     return 0;
 }
@@ -268,6 +261,11 @@ bool TCPSocket::LoadConfig()
     CConfig::getInstance()->GetConfigStringValue(CONFIG_PATH, "Server", "IP", m_strCfgIP);
     CConfig::getInstance()->GetConfigIntValue(CONFIG_PATH, "Server", "PORT", &m_nCfgPort);
     CConfig::getInstance()->GetConfigIntValue(CONFIG_PATH, "Server", "RLIMIT_NUM", &m_nCfgLimitNum);
+
+    CConfig::getInstance()->GetConfigIntValue(CONFIG_PATH, "Thread Pool", "SIZE_TASK", &m_nSizeTask);
+    CConfig::getInstance()->GetConfigIntValue(CONFIG_PATH, "Thread Pool", "SIZE_THREAD_MAX", &m_nSizeThreadPoolMax);
+    CConfig::getInstance()->GetConfigIntValue(CONFIG_PATH, "Thread Pool", "SIZE_THREAD_PRE", &m_nSizeThreadPoolPre);
+
     return true;
 }
 
@@ -335,9 +333,26 @@ bool TCPSocket::ShowSocketStatus(void)
     }
     m_nCfgLimitNum = tmpRt.rlim_cur;
     LOG("[CSocket]get rlimit Cur:%d. Max:%d.\n", tmpRt.rlim_cur, tmpRt.rlim_max);
-    LOG("[CMAIN]Build by 2015.12.03 16:54\n");
+    LOG("[CMAIN]ThreadPool Task:%d PoolMax:%d PoolPre:%d.\n", m_nSizeTask, m_nSizeThreadPoolMax, m_nSizeThreadPoolPre);
+    LOG("[CMAIN]Build by 2015.12.07 19:03.\n");
     LOG("[CMAIN]=============Test End============\n");
 
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// 名   称：TCPSocket::MaskSignal
+/// 功   能：屏蔽忽略SIGPIPE信号错误
+/// 参   数：void
+/// 返回 值：bool                       private
+////////////////////////////////////////////////////////////////////////////////
+bool TCPSocket::ThreadPollInit()
+{
+    if(0 > m_mgrThreadPool.Init(m_nSizeTask,  m_nSizeThreadPoolMax, m_nSizeThreadPoolPre))
+    {
+        cout << "初始化失败" << endl;
+        return false;
+    }
     return true;
 }
 
@@ -452,6 +467,11 @@ bool TCPSocket::Init()
     SetLimitMax();
     // 显示当前Socket配置情况
     if (!ShowSocketStatus())
+    {
+        return false;
+    }
+    // 初始化线程池
+    if (!ThreadPollInit())
     {
         return false;
     }

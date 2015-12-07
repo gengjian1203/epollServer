@@ -25,7 +25,6 @@
 
 using namespace std;
 
-
 //#define CONFIG_PATH                 "/home/gj/github/epollServer/Document/Config.ini"
 #define CONFIG_PATH                 "./Document/Config.ini"
 #define RLIMIT_MAX                  (65525)
@@ -34,16 +33,14 @@ using namespace std;
 #define SIZE_STRSQL_MAX             (512)
 #define SIZE_CLIENT_DATE_MAX        (20)
 
-#define SERVER_CMD_TEST             (99)
-
 //单位秒，监测空闲列表时间间隔，在空闲队列中超过TASK_DESTROY_INTERVAL时间的任务将被自动销毁
-const int CHECK_IDLE_TASK_INTERVAL = 300;
+#define CHECK_IDLE_TASK_INTERVAL    (300)
 //单位秒，任务自动销毁时间间隔
-const int TASK_DESTROY_INTERVAL = 60;
-//监控线程池是否为空时间间隔,微秒
-const int IDLE_CHECK_POLL_EMPTY = 500;
-//线程池线程空闲自动退出时间间隔 ,5分钟
-const int  THREAD_WAIT_TIME_OUT = 300;
+#define TASK_DESTROY_INTERVAL       (60)
+//单位微秒，监控线程池是否为空时间间隔
+#define IDLE_CHECK_POLL_EMPTY       (500)
+//单位秒，线程池线程空闲自动退出时间间隔 ,5分钟
+#define THREAD_WAIT_TIME_OUT        (300)
 
 #define __DEBUG
 
@@ -55,13 +52,14 @@ const int  THREAD_WAIT_TIME_OUT = 300;
 
 struct stuThreadParam
 {
-    int* pfdListen;
-    int* pfdEpoll;
-    epoll_event* pEvents;
-    map<int, void*>* pMapBuffer;
-    int* pRLimitNum;
+    int* pfdListen;                     // 服务器监听Socket
+    int* pfdEpoll;                      // epoll Socket
+    epoll_event* pEvents;               // 事件集合
+    map<int, void*>* pMapBuffer;        // 每个连接的环形缓冲区
+    void* pMgrThreadPool;               // 线程池管理者
+    int* pRLimitNum;                    // I/O口连接最大数
 
-    bool* pOnOff;
+    bool* pOnOff;                       // Epoll工作线程开关
 };
 
 #endif // GLOBAL_H

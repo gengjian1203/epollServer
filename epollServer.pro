@@ -28,7 +28,8 @@ SOURCES += main.cpp \
     Thread.cpp \
     ThreadPool.cpp \
     ThreadPoolManager.cpp \
-    Config.cpp
+    Config.cpp \
+    CMDProcess.cpp
 
 HEADERS += \
     TcpSocket.h \
@@ -44,7 +45,9 @@ HEADERS += \
     Thread.h \
     ThreadPool.h \
     ThreadPoolManager.h \
-    Config.h
+    Config.h \
+    AgreeCMD.h \
+    CMDProcess.h
 
 LIBS += \
     -lpthread \

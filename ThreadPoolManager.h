@@ -30,6 +30,7 @@
 
 class CThreadPoolManager
 {
+public:
     CThreadPoolManager();
     ~CThreadPoolManager();
 
