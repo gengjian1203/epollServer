@@ -31,6 +31,7 @@ using namespace std;
 #define GLODEN_KEY                  (273565573)
 #define SIZE_PACKET_MAX             (1024)
 #define SIZE_STRSQL_MAX             (512)
+#define SIZE_CLIENT_IP_MAX          (20)
 #define SIZE_CLIENT_DATE_MAX        (20)
 
 //单位秒，监测空闲列表时间间隔，在空闲队列中超过TASK_DESTROY_INTERVAL时间的任务将被自动销毁

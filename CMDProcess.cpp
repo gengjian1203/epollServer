@@ -18,7 +18,14 @@ CCMDProcess* CCMDProcess::getInstance()
 
 void CCMDProcess::Proc(CSocketPacket* pPacket)
 {
-    LOG("child thread tid = %d.\n", pthread_self());
+    int nCMD = pPacket->get_CMD();
+    int nResult = pPacket->pop_long();
+    for (int i = 0; i < 1000; i++)
+    {
+        int j = 9898;
+    }
+    LOG("child thread tid = %d.nResult = %d.\n", pthread_self(), nResult);
+
 //    // RingBuffer, ThreadPoor,
 
 //    CSocketPacket packSend;

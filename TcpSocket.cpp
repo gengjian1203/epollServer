@@ -48,16 +48,19 @@ bool TCPSocket::SetNoBlock(int fd)
 ////////////////////////////////////////////////////////////////////////////////
 bool TCPSocket::SignInfd(CSocketClient* pClient)
 {
+    char strIP[SIZE_CLIENT_IP_MAX];
     char strSQL[SIZE_STRSQL_MAX];
     CTimeVal time;
     time.getNowTime();
+    memset(strSQL, 0x00, sizeof(strSQL));
+    memset(strIP, 0x00, sizeof(strIP));
     //LOG("In is IP:%s, Port:%d.\n", inet_ntoa(pClient->getAddress()->sin_addr), htons(pClient->getAddress()->sin_port));
     // insert into signinlog(ip, port, indate) values('192.168.1.1', 1111, '2011-11-11 11:11:11');
+    strcpy(strIP, inet_ntoa(pClient->getAddress()->sin_addr));
     pClient->setLoginDate(time.getNowYear(), time.getNowMonth(), time.getNowDay(),
                           time.getNowHour(), time.getNowMinute(), time.getNowSecond());
     sprintf(strSQL, "insert into signinlog(ip, port, indate) values('%s', %d, '%s')",
-            inet_ntoa(pClient->getAddress()->sin_addr), htons(pClient->getAddress()->sin_port),
-            pClient->getLoginDate());
+            strIP, htons(pClient->getAddress()->sin_port), pClient->getLoginDate());
     CSQLManager::getInstance()->Query(strSQL);
     return true;
 }
@@ -186,7 +189,7 @@ bool TCPSocket::EpollELWork(stuThreadParam* pStu, int number)
                 {
                     if ((errno == EAGAIN) || (errno == EWOULDBLOCK))
                     {
-                        LOG("Recv Completed.\n");
+                        //LOG("Recv Completed.\n");
                         break;
                     }
                     Delfd(pMapBuffer, epollfd, sockfd);

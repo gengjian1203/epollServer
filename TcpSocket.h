@@ -25,7 +25,7 @@ private:
     static bool EpollELWork(stuThreadParam* pStu, int number);
     static void* ThreadEpollWork(void* param);
     // Config
-    char m_strCfgIP[20];
+    char m_strCfgIP[SIZE_CLIENT_IP_MAX];
     int m_nCfgPort;
     int m_nCfgLimitNum;
     int m_nSizeTask;
