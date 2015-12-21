@@ -19,6 +19,9 @@ public:
     ~CSocketPacket();
 
 private:
+    void* m_pClient;
+
+private:
     char* m_pData;
     char* m_pTail;
     bool m_bCompleted;
@@ -27,6 +30,10 @@ private:
 
     int getFreeSize();
     bool checkFreeSize(unsigned int nSize);
+
+public:
+    bool setClient(void* pClient);
+    void* getClient();
 
 public:
     bool isCompleted();

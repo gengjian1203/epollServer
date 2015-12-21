@@ -2,6 +2,7 @@
 
 CSocketClient::CSocketClient()
 {
+    m_sockFD = 0;
     m_nActiveSign = 0;
     memset(m_strLoginDate, 0, sizeof(m_strLoginDate));
     memset(&m_address, 0, sizeof(sockaddr_in));
@@ -35,6 +36,29 @@ bool CSocketClient::Destory()
 {
 
     return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// 名   称：CSocketClient::setFD
+/// 功   能：保存来访客户端的sockfd
+/// 参   数：int nSockFD               通过accept函数获得的客户端sockfd信息（深拷贝）
+/// 返回 值：bool                       public
+////////////////////////////////////////////////////////////////////////////////
+bool CSocketClient::setFD(int nSockFD)
+{
+    m_sockFD = nSockFD;
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// 名   称：CSocketClient::getFD
+/// 功   能：获取客户端的sockfd
+/// 参   数：void
+/// 返回 值：int                        public
+////////////////////////////////////////////////////////////////////////////////
+int CSocketClient::getFD()
+{
+    return m_sockFD;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -10,6 +10,7 @@ public:
     ~CSocketClient();
 
 private:
+    int m_sockFD;
     int m_nActiveSign;
     char m_strLoginDate[SIZE_CLIENT_DATE_MAX];
     struct sockaddr_in m_address;
@@ -20,6 +21,8 @@ public:
     bool Init();
     bool Destory();
 
+    bool setFD(int nSockFD);
+    int getFD();
     bool setAddress(struct sockaddr_in* src);
     struct sockaddr_in* getAddress();
     bool setLoginDate(int nYear, int nMonth, int nDay, int nHour, int nMinute, int nSecond);

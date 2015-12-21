@@ -79,6 +79,7 @@ bool TCPSocket::Addfd(struct sockaddr_in* pAddr, map<int, CSocketClient*>* pMapB
     (*pMapBuffer)[fd] = new CSocketClient;
     (*pMapBuffer)[fd]->Init();
     (*pMapBuffer)[fd]->setAddress(pAddr);
+    (*pMapBuffer)[fd]->setFD(fd);
 
     epoll_event event;
     memset(&event, 0x00, sizeof(event));
@@ -209,7 +210,9 @@ bool TCPSocket::EpollELWork(stuThreadParam* pStu, int number)
                     {
                         if (pPacket->isChecked())
                         {
+                            pPacket->setClient((*pMapBuffer)[sockfd]);
                             pMgrThreadPool->Run(MyProcFunc, (void*)pPacket);
+
                             pPacket = new CSocketPacket;
                         }
                         else

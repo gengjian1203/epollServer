@@ -29,7 +29,7 @@ using namespace std;
 #define CONFIG_PATH                 "./Document/Config.ini"
 #define RLIMIT_MAX                  (65525)
 #define GLODEN_KEY                  (273565573)
-#define SIZE_PACKET_MAX             (1024)
+#define SIZE_PACKET_MAX             (2048)
 #define SIZE_STRSQL_MAX             (512)
 #define SIZE_CLIENT_IP_MAX          (20)
 #define SIZE_CLIENT_DATE_MAX        (20)
@@ -61,6 +61,12 @@ struct stuThreadParam
     int* pRLimitNum;                    // I/O口连接最大数
 
     bool* pOnOff;                       // Epoll工作线程开关
+};
+
+struct stuCMDParam
+{
+    void* pClient;                      // 通讯客户端fd毫
+    void* pPacket;                      // 封包指针
 };
 
 #endif // GLOBAL_H

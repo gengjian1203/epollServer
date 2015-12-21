@@ -24,6 +24,8 @@ public:
     int GetNextPackSize();
     bool PushByte(char* pBuf, int nBufSize);
     bool PopByte(char* pBuf, int nBufSize);
+
+    bool isHasPacket();
     bool PopPacket(char* pBuf);
 
 };

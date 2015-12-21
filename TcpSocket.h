@@ -1,7 +1,6 @@
 #ifndef __TCPSOCKET_H__
 #define __TCPSOCKET_H__
 
-#include "SocketClient.h"
 #include "SqlManager.h"
 #include "ThreadPoolManager.h"
 #include "CMDProcess.h"

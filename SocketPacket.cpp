@@ -46,6 +46,18 @@ bool CSocketPacket::checkFreeSize(unsigned int nSize)
     return ((getFreeSize() - sizeof(int)) >= nSize);
 }
 
+
+bool CSocketPacket::setClient(void* pClient)
+{
+    m_pClient = pClient;
+    return true;
+}
+
+void* CSocketPacket::getClient()
+{
+    return m_pClient;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 /// 名   称：CSocketPacket::isCompleted
 /// 功   能：发包前确认包是否封装完整

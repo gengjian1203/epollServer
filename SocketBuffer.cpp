@@ -213,6 +213,51 @@ bool CSocketBuffer::PopByte(char* pBuf, int nBufSize)
     return true;
 }
 
+bool CSocketBuffer::isHasPacket()
+{
+
+    CLockAuto autolock(m_lock);
+
+    // 制作下个包的长度保存在nResult中
+    int nResult = 0;
+    int nInt = sizeof(int);
+    if (GetBusySize() < sizeof(int))
+    {
+        return false;
+    }
+    //cout << m_pRead - m_pHead << "%%%%" << (int)*m_pRead << "^^^" <<endl;
+
+    int nRight = m_pHead + m_nBufferSize - m_pRead;
+    if (nRight < nInt)
+    {
+        int nLeftSize = nInt - nRight;
+        if (nRight != 0)
+        {
+            memcpy((char*)&nResult, m_pRead, nRight);
+        }
+        memcpy((char*)&nResult + nRight, m_pHead, nLeftSize);
+    }
+    else
+    {
+        memcpy((char*)&nResult, m_pRead, nInt);
+
+    }
+
+    // 读取数据长度非法则返回
+    if (nResult <= 0)
+    {
+        return false;
+    }
+    // 缓冲区数据不足读取长度则返回
+    int nBusySize = GetBusySize();
+    if (nBusySize < nResult)
+    {
+        return false;
+    }
+
+    return true;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 /// 名   称：CSocketBuffer::PopPacket
 /// 功   能：根据封包结构算出该封包大小，弹出下个封包的码流
@@ -228,7 +273,7 @@ bool CSocketBuffer::PopPacket(char* pBuf)
     int nInt = sizeof(int);
     if (GetBusySize() < sizeof(int))
     {
-        return 0;
+        return false;
     }
     //cout << m_pRead - m_pHead << "%%%%" << (int)*m_pRead << "^^^" <<endl;
 

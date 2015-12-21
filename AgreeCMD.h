@@ -3,6 +3,7 @@
 
 
 #define SERVER_CMD_TEST             (99)
+#define SERVER_CMD_HEARTBEAT        (100)
 
 
 #endif // AGREECMD_H
